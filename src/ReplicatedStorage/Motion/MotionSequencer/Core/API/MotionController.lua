@@ -1,9 +1,25 @@
-local CinematicController = {}
-CinematicController.__index = CinematicController
+--@MotionController
+--The public API
+--Is a layer to communicate with the runtime engine
+
+--Methods starting with "_" are private and shouldn't be called externally
+
+--[[
+    Usage:
+]]
+local MotionController = {}
+MotionController.__index = MotionController
 
 local RunService = game:GetService("RunService")
 local Runtime = require(script.Parent.Parent.Sequencer.Runtime)
 
+type manifest = {
+
+}
+
+--[Signal Class]
+--Simple signal implementation using BindableEvents
+--Might get a rewrite for more performance
 local function createSignal()
     local bindable = Instance.new("BindableEvent")
     return {
@@ -14,8 +30,9 @@ local function createSignal()
     }
 end
 
-function CinematicController.new(manifest)
-    local self = setmetatable({}, CinematicController)
+--Creates a new controller for an animation file
+function MotionController.new(manifest : manifest) : typeof(setmetatable({}, MotionController))
+    local self = setmetatable({} :: {}, MotionController :: {}) :: {}
 
     self.Data = typeof(manifest) == "Instance" and require(manifest) or manifest
     self.Time = 0
@@ -27,10 +44,11 @@ function CinematicController.new(manifest)
 
     self._connection = nil
 
-    return self
+    return (self :: typeof(setmetatable({}, MotionController))) :: any?
 end
 
-function CinematicController:Play()
+--Plays an animation
+function MotionController:Play() : ()
     if self.IsPlaying then return end
     self.IsPlaying = true
 
@@ -46,16 +64,16 @@ function CinematicController:Play()
         Runtime.update(self.Data, self.Time)
     end)
 end
-
-function CinematicController:Pause()
+--Pauses an on-going animation
+function MotionController:Pause()
     self.IsPlaying = false
     if self._connection then
         self._connection:Disconnect()
         self._connection = nil
     end
 end
-
-function CinematicController:Stop()
+--Stops an on-going animation
+function MotionController:Stop()
     self:Pause()
     self.Time = 0
 
@@ -64,16 +82,16 @@ function CinematicController:Stop()
 
     self.Stopped:Fire()
 end
-
-function CinematicController:Seek(seconds)
+--Render a specific timestamp on an animation
+function MotionController:Seek(seconds)
     self.Time = math.clamp(seconds, 0, self.Data.Metadata.Duration)
     Runtime.update(self.Data, self.Time)
 end
-
-function CinematicController:Destroy()
+--_private method
+function MotionController:_destroy()
     self:Stop()
     self.Completed:Destroy()
     self.Stopped:Destroy()
 end
 
-return CinematicController
+return MotionController
